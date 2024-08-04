@@ -4,57 +4,94 @@ import { useState, useEffect } from 'react';
 import { firestore } from '@/firebase';
 import { Box, Typography, Modal, TextField, Button, Stack, Card, CardContent } from "@mui/material";
 import { query, collection, getDocs, getDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-export default function Home() {
+
+export const initializeStorage = async (userId) => {
+  const storageRef = collection(firestore, `users/${userId}/storage`);
+  const snapshot = await getDocs(storageRef);
+
+  // Check if the storage collection is empty
+  if (snapshot.empty) {
+      // Create a default item to initialize the collection
+      const defaultItemRef = doc(storageRef, "Sample Item");
+      await setDoc(defaultItemRef, { name: "Sample Item", count: 1 });
+  }
+};
+
+export default function StorageOrgPage() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
+  const [user, setUser] = useState(null); // State to hold the user object
 
-  const updateInventory = async () => {
-    const snapshot = query(collection(firestore, 'storage'));
-    const docs = await getDocs(snapshot);
-    const inventoryList = [];
-    docs.forEach((doc) => {
-      inventoryList.push({
-        name: doc.id,
-        ...doc.data(),
-      });
-    });
+  const auth = getAuth(); // Get the auth object
+
+// Function to initialize storage for a new user
+
+
+
+  const updateInventory = async (userID) => {
+    const inventoryRef = collection(firestore, `users/${userID}/storage`);
+    // const q = query(inventoryRef);
+    const snapshot = await getDocs(inventoryRef);
+    const inventoryList = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+      count: doc.data().count,
+    }));
     setInventory(inventoryList);
+
+    // const snapshot = query(collection(firestore, 'storage'));
+    // const docs = await getDocs(snapshot);
+    // const inventoryList = [];
+    // docs.forEach((doc) => {
+    //   inventoryList.push({
+    //     name: doc.id,
+    //     ...doc.data(),
+    //   });
+    // });
+    // setInventory(inventoryList);
   };
 
-  const addItem = async (item) => {
-    const docRef = doc(collection(firestore, 'storage'), item);
-    const docSnap = await getDoc(docRef);
+  const addItem = async (userID, itemName) => {
+    const itemRef = doc(firestore, `users/${userID}/storage`, itemName);
+    // const docRef = doc(collection(firestore, 'storage'), item);
+    const docSnap = await getDoc(itemRef);
     if (docSnap.exists()) {
-      const { count } = docSnap.data();
-      await setDoc(docRef, { count: count + 1 });
+      const count = docSnap.data().count || 0;
+      await setDoc(itemRef, { count: count + 1 }, { merge: true });
     } else {
-      await setDoc(docRef, { count: 1 });
+      await setDoc(itemRef, { name: itemName, count: 1 });
     }
-    await updateInventory();
+    await updateInventory(userID);
   };
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, 'storage'), item);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const { count } = docSnap.data();
-      if (count === 1) {
-        await deleteDoc(docRef);
-      } else {
-        await setDoc(docRef, { count: count - 1 });
-      }
+  const removeItem = async (userID, itemName) => {
+
+    const itemRef = doc(firestore, `users/${userID}/storage`, itemName);
+    const docSnap = await getDoc(itemRef);
+    if (docSnap.exists() && docSnap.data().count > 1) {
+      await setDoc(itemRef, { count: docSnap.data().count - 1 }, { merge: true });
+    } else {
+      await deleteDoc(itemRef);
     }
-    await updateInventory();
+    await updateInventory(userID);
   };
 
   useEffect(() => {
-    updateInventory();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        if (currentUser) {
+            updateInventory(currentUser.uid);
+        }
+    });
+    return () => unsubscribe();
+    }, []);
+  
 
   return (
     <Box width="100vw" height="100vh" display="flex" flexDirection="column" alignItems="center" justifyContent="center" gap={2}>
@@ -77,7 +114,7 @@ export default function Home() {
           <Typography variant="h6">Add Item</Typography>
           <Stack width="100%" spacing={2} direction="row">
             <TextField variant='outlined' fullWidth value={itemName} onChange={(e) => setItemName(e.target.value)} />
-            <Button variant="contained" onClick={() => { addItem(itemName); setItemName(''); handleClose(); }}>Add Item</Button>
+            <Button variant="contained" onClick={() => { addItem(user.uid, itemName); setItemName(''); handleClose(); }}>Add Item</Button>
           </Stack>
         </Box>
       </Modal>
@@ -99,8 +136,8 @@ export default function Home() {
                   {count}
                 </Typography>
                 <Stack direction="row" spacing={2}>
-                  <Button variant="contained" sx={{ width: '70px' }} onClick={() => addItem(name)}>Add</Button>
-                  <Button variant="contained" sx={{ width: '80px' }} onClick={() => removeItem(name)}>Remove</Button>
+                  <Button variant="contained" sx={{ width: '70px' }} onClick={() => addItem(user.uid, name)}>Add</Button>
+                  <Button variant="contained" sx={{ width: '80px' }} onClick={() => removeItem(user.uid, name)}>Remove</Button>
                 </Stack>
               </Box>
             </CardContent>

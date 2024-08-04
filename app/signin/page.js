@@ -1,26 +1,43 @@
-import { signInWithPopup } from 'firebase/auth';
-import { auth, provider } from '../../firebase'; // Adjust path as necessary
+"use client";
+
+import { auth, firestore, GoogleAuthProvider } from '../../firebase'; // Adjust path as necessary
 import { useRouter } from 'next/navigation';
+import { signInWithPopup } from "firebase/auth";
+import { doc, setDoc } from 'firebase/firestore';
+import { initializeStorage } from '../storage-org/page';
 
 const SignInPage = () => {
     const router = useRouter();
-  const handleSignIn = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-      console.log("User signed in");
-      // Update sign-in state here if needed
-      router.push('/storage-org');
-    } catch (error) {
-      console.error('Error signing in with Google:', error.message);
-    }
-  };
+    const provider = new GoogleAuthProvider();
 
-  return (
-    <div>
-      <h1>Sign In</h1>
-      <button onClick={handleSignIn}>Sign in with Google</button>
-    </div>
-  );
+    const handleSignIn = async () => {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            const userRef = doc(firestore, "users", user.uid);
+
+            await setDoc(userRef, {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                lastLogin: new Date()
+            }, { merge: true });
+
+            await initializeStorage(user.uid);
+
+            console.log("User signed in");
+            router.push('/storage-org');
+        } catch (error) {
+            console.error('Error signing in with Google:', error);
+        }
+    };
+
+    return (
+        <div>
+            <h1>Sign In</h1>
+            <button onClick={handleSignIn}>Sign in with Google</button>
+        </div>
+    );
 };
 
 export default SignInPage;

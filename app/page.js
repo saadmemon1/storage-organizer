@@ -1,10 +1,7 @@
-// Use the useRouter hook for routing
 "use client";
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import SignInPage from './signin/page';
 import LandingPage from './landing/page';
-import Home from './storage-org/page';
+import StorageOrgPage from './storage-org/page';
 
 const Page = () => {
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -13,7 +10,7 @@ const Page = () => {
     setIsSignedIn(true);
   };
   if (!isSignedIn) {
-    return <SignInPage onSignInSuccess={handleSignInSuccess} />;
+    return <LandingPage onSignInSuccess={handleSignInSuccess} />;
   }
 
   return <StorageOrgPage />;
