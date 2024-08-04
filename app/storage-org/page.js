@@ -9,6 +9,8 @@ import AddIcon from '@mui/icons-material/Add';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from '@mui/icons-material/Search';
+
 
 export const initializeStorage = async (userId) => {
   const storageRef = collection(firestore, `users/${userId}/storage`);
@@ -21,12 +23,17 @@ export const initializeStorage = async (userId) => {
 };
 
 export default function StorageOrgPage() {
+  const [searchTerm, setSearchTerm] = useState('');
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
   const [user, setUser] = useState(null);
 
   const auth = getAuth();
+
+  const filteredInventory = inventory.filter(item =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const updateInventory = async (userID) => {
     const inventoryRef = collection(firestore, `users/${userID}/storage`);
@@ -81,6 +88,22 @@ export default function StorageOrgPage() {
         <Box width="80%" maxWidth="800px" alignSelf="center" display="flex" flexDirection="column">
           <Typography variant="h4" color="#333" mb={4}>Storage</Typography>
         
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Box flexGrow={1} />
+            <TextField
+              size="small"
+              variant="outlined"
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon color="action" sx={{ mr: 1 }} />
+                ),
+              }}
+            />
+          </Box>
+
         <Box border="1px solid #ccc" borderRadius={1} overflow="hidden">
           {/* Column headers */}
           <Box display="flex" bgcolor="#f5f5f5" p={2}>
