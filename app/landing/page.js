@@ -17,11 +17,10 @@ const StyledContainer = styled(Container)(({ theme }) => ({
 
 const LandingPage = () => {
   const router = useRouter();
-  const currentYear = new Date().getFullYear();
 
   return (
     <StyledContainer maxWidth="sm">
-      <Box textAlign="center" sx={{ width: '100%', mt: 4 }}> // Added margin-top
+      <Box textAlign="center" sx={{ width: '100%', mt: 4 }}>
         <StorageIcon color="primary" sx={{ fontSize: 60, marginBottom: 2 }} />
         <Typography variant="h2" gutterBottom>
           Welcome to Storage Organizer
@@ -45,7 +44,7 @@ const LandingPage = () => {
           </Link>
         </Box>
         <Typography variant="body2" color="text.secondary">
-          © {currentYear} Storage Organizer. All rights reserved.
+          © 2024 Storage Organizer. All rights reserved.
         </Typography>
       </Box>
     </StyledContainer>
