@@ -113,7 +113,7 @@ export default function StorageOrgPage() {
           </Box>
 
           
-          {inventory.map(({ name, count }) => (
+          {filteredInventory.map(({ name, count }) => (
             <Box key={name} display="flex" alignItems="center" p={2} borderTop="1px solid #eee">
               <Typography sx={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {name.charAt(0).toUpperCase() + name.slice(1)}
