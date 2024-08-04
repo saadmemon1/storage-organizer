@@ -2,20 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { firestore } from '@/firebase';
-import { Box, Typography, Modal, TextField, Button, Stack, Card, CardContent } from "@mui/material";
+import { Box, Typography, Modal, TextField, Button, Stack, IconButton, Link } from "@mui/material";
 import { query, collection, getDocs, getDoc, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-
+import AddIcon from '@mui/icons-material/Add';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export const initializeStorage = async (userId) => {
   const storageRef = collection(firestore, `users/${userId}/storage`);
   const snapshot = await getDocs(storageRef);
 
-  // Check if the storage collection is empty
   if (snapshot.empty) {
-      // Create a default item to initialize the collection
-      const defaultItemRef = doc(storageRef, "Sample Item");
-      await setDoc(defaultItemRef, { name: "Sample Item", count: 1 });
+    const defaultItemRef = doc(storageRef, "Sample Item");
+    await setDoc(defaultItemRef, { name: "Sample Item", count: 1 });
   }
 };
 
@@ -23,17 +24,12 @@ export default function StorageOrgPage() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
-  const [user, setUser] = useState(null); // State to hold the user object
+  const [user, setUser] = useState(null);
 
-  const auth = getAuth(); // Get the auth object
-
-// Function to initialize storage for a new user
-
-
+  const auth = getAuth();
 
   const updateInventory = async (userID) => {
     const inventoryRef = collection(firestore, `users/${userID}/storage`);
-    // const q = query(inventoryRef);
     const snapshot = await getDocs(inventoryRef);
     const inventoryList = snapshot.docs.map(doc => ({
       id: doc.id,
@@ -41,22 +37,10 @@ export default function StorageOrgPage() {
       count: doc.data().count,
     }));
     setInventory(inventoryList);
-
-    // const snapshot = query(collection(firestore, 'storage'));
-    // const docs = await getDocs(snapshot);
-    // const inventoryList = [];
-    // docs.forEach((doc) => {
-    //   inventoryList.push({
-    //     name: doc.id,
-    //     ...doc.data(),
-    //   });
-    // });
-    // setInventory(inventoryList);
   };
 
   const addItem = async (userID, itemName) => {
     const itemRef = doc(firestore, `users/${userID}/storage`, itemName);
-    // const docRef = doc(collection(firestore, 'storage'), item);
     const docSnap = await getDoc(itemRef);
     if (docSnap.exists()) {
       const count = docSnap.data().count || 0;
@@ -71,7 +55,6 @@ export default function StorageOrgPage() {
   const handleClose = () => setOpen(false);
 
   const removeItem = async (userID, itemName) => {
-
     const itemRef = doc(firestore, `users/${userID}/storage`, itemName);
     const docSnap = await getDoc(itemRef);
     if (docSnap.exists() && docSnap.data().count > 1) {
@@ -84,17 +67,76 @@ export default function StorageOrgPage() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        if (currentUser) {
-            updateInventory(currentUser.uid);
-        }
+      setUser(currentUser);
+      if (currentUser) {
+        updateInventory(currentUser.uid);
+      }
     });
     return () => unsubscribe();
-    }, []);
-  
+  }, []);
 
   return (
-    <Box width="100vw" height="100vh" display="flex" flexDirection="column" alignItems="center" justifyContent="center" gap={2}>
+    <Box width="100vw" height="100vh" display="flex" flexDirection="column">
+      <Box flexGrow={1} display="flex" flexDirection="column" p={4}>
+        <Box width="80%" maxWidth="800px" alignSelf="center" display="flex" flexDirection="column">
+          <Typography variant="h4" color="#333" mb={4}>Storage</Typography>
+        
+        <Box border="1px solid #ccc" borderRadius={1} overflow="hidden">
+          {/* Column headers */}
+          <Box display="flex" bgcolor="#f5f5f5" p={2}>
+            <Typography variant="subtitle1" sx={{ width: '40%' }}>Name</Typography>
+            <Typography variant="subtitle1" sx={{ width: '20%', textAlign: 'center' }}>Count</Typography>
+            <Typography variant="subtitle1" sx={{ width: '40%', textAlign: 'center' }}>Actions</Typography>
+          </Box>
+
+          
+          {inventory.map(({ name, count }) => (
+            <Box key={name} display="flex" alignItems="center" p={2} borderTop="1px solid #eee">
+              <Typography sx={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {name.charAt(0).toUpperCase() + name.slice(1)}
+              </Typography>
+              <Typography sx={{ width: '20%', textAlign: 'center' }}>{count}</Typography>
+              <Box sx={{ width: '40%', display: 'flex', justifyContent: 'center' }}>
+                <IconButton onClick={() => addItem(user.uid, name)} size="small" sx={{ mr: 2 }}>
+                  <AddIcon />
+                </IconButton>
+                <IconButton onClick={() => removeItem(user.uid, name)} size="small">
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+
+        <Box alignSelf="flex-end" mt={2}>
+            <Button variant="contained" onClick={handleOpen}>Add New Item</Button>
+          </Box>
+        </Box>
+      </Box>
+
+
+          <Box 
+        component="footer" 
+        mt={4} 
+        py={2} 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center"
+        borderTop="1px solid #ccc"
+      >
+        <Typography variant="body2" color="text.secondary" align="center">
+          © 2024 Storage Organizer. All rights reserved. Made by Saad Inam.
+        </Typography>
+        <Box mt={1}>
+          <Link href="https://github.com/saadmemon1" target="_blank" rel="noopener" color="inherit" sx={{ mr: 2 }}>
+            <GitHubIcon />
+          </Link>
+          <Link href="https://linkedin.com/in/saadinamm" target="_blank" rel="noopener" color="inherit">
+            <LinkedInIcon />
+          </Link>
+        </Box>
+      </Box>
+
       <Modal open={open} onClose={handleClose}>
         <Box
           position="absolute"
@@ -118,33 +160,6 @@ export default function StorageOrgPage() {
           </Stack>
         </Box>
       </Modal>
-
-      <Button variant="contained" onClick={handleOpen}>Add New Item</Button>
-      <Box border="1px solid #333" width="80%" maxWidth="800px" p={2}>
-        <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
-          <Typography variant="h2" color="#333">Storage</Typography>
-        </Box>
-        <Stack direction="column" spacing={2} overflow="auto">
-          {inventory.map(({ name, count }) => (
-            <Card key={name} variant="outlined">
-            <CardContent>
-              <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" sx={{ gap: 22 }}>
-                <Typography variant="h5" color="#333" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </Typography>
-                <Typography variant="h6" color="#333" sx={{ width: '40px', textAlign: 'center' }}>
-                  {count}
-                </Typography>
-                <Stack direction="row" spacing={2}>
-                  <Button variant="contained" sx={{ width: '70px' }} onClick={() => addItem(user.uid, name)}>Add</Button>
-                  <Button variant="contained" sx={{ width: '80px' }} onClick={() => removeItem(user.uid, name)}>Remove</Button>
-                </Stack>
-              </Box>
-            </CardContent>
-          </Card>
-          ))}
-        </Stack>
-      </Box>
     </Box>
   );
 }
