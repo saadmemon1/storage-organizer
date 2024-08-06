@@ -19,7 +19,7 @@ export async function POST(request) {
     const { success, score, 'error-codes': errorCodes } = response.data;
 
     if (success && score > 0.5) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, score, errorCodes });
     } else {
       return NextResponse.json({ 
         success: false, 
@@ -33,7 +33,8 @@ export async function POST(request) {
     return NextResponse.json({ 
       success: false, 
       message: 'Error verifying reCAPTCHA', 
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     }, { status: 500 });
   }
 }
