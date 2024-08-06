@@ -9,7 +9,7 @@ export async function POST(request) {
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`
     );
-
+    console.log('reCAPTCHA API response:', response.data);
     const { success, score } = response.data;
 
     if (success && score > 0.5) {
@@ -19,7 +19,7 @@ export async function POST(request) {
     }
   } catch (error) {
     console.error('Error verifying reCAPTCHA:', error);
-    return NextResponse.json({ success: false, message: 'Error verifying reCAPTCHA' }, { status: 500 });
+    return NextResponse.json({ success: false, message: 'Error verifying reCAPTCHA', error: error.message }, { status: 500 });
   }
 }
 
