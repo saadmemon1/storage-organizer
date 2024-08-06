@@ -28,7 +28,7 @@ const SignInButton = () => {
         setError('');
     
         try {
-            const token = await executeRecaptcha('signin');
+            const token = await executeRecaptcha('submit');
             console.log('reCAPTCHA token generated:', token.substring(0, 20) + '...');
 
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
@@ -44,6 +44,10 @@ const SignInButton = () => {
         
             if (!recaptchaResponse.ok || !recaptchaData.success) {
                 throw new Error(`reCAPTCHA verification failed: ${recaptchaData.message}. Score: ${recaptchaData.score}, Error codes: ${recaptchaData.errorCodes?.join(', ')}`);
+            }
+
+            if (recaptchaData.score < 0.5) {
+                throw new Error('reCAPTCHA score too low. Please try again.');
             }
     
             const result = await signInWithPopup(auth, provider);
