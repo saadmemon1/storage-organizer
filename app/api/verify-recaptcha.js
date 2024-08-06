@@ -3,7 +3,7 @@ import axios from 'axios';
 export default async function handler(req, res) {
     if (req.method === 'POST') {
       const { token } = req.body;
-      const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+      const secretKey = process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY;
   
       try {
         const response = await axios.post(
