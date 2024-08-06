@@ -29,7 +29,7 @@ const SignInButton = () => {
 
         try {
             const token = await executeRecaptcha('signin');
-            
+    
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
                 method: 'POST',
                 headers: {
@@ -37,9 +37,13 @@ const SignInButton = () => {
                 },
                 body: JSON.stringify({ token }),
             });
-    
+        
+            if (!recaptchaResponse.ok) {
+                throw new Error(`HTTP error! status: ${recaptchaResponse.status}`);
+            }
+        
             const recaptchaData = await recaptchaResponse.json();
-    
+        
             if (!recaptchaData.success) {
                 throw new Error('reCAPTCHA verification failed. Please try again.');
             }
