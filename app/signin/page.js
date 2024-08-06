@@ -29,6 +29,8 @@ const SignInButton = () => {
     
         try {
             const token = await executeRecaptcha('signin');
+            console.log('reCAPTCHA token generated:', token);
+
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
                 method: 'POST',
                 headers: {
@@ -42,6 +44,7 @@ const SignInButton = () => {
             }
         
             const recaptchaData = await recaptchaResponse.json();
+            console.log('reCAPTCHA verification response:', recaptchaData);
         
             if (!recaptchaData.success) {
                 throw new Error('reCAPTCHA verification failed. Please try again.');
