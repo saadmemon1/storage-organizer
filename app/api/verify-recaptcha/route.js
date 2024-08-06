@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-export default async function verifyRecaptcha(req, res) {
+export default async function POST(req) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    // return res.status(405).json({ message: 'Method not allowed' });
+    return NextResponse.json({ message: 'Method not allowed' }, { status: 405, headers: { 'Allow': 'POST' } });
     
 }
+
   try {
-    const { token } = await request.json();
+    const { token } = await req.json();
     const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
     if (!secretKey) {
@@ -35,9 +37,9 @@ export default async function verifyRecaptcha(req, res) {
 
 
     if (data.success && data.score > 0.5) {
-      return res.status(200).json({ success: true });
+      return NextResponse.json({ success: true }, { status: 200 });
     } else {
-      return res.status(400).json({
+      return NextResponse.json({
           success: false,
           message: 'reCAPTCHA verification failed',
           errorCodes: data['error-codes']  // Make sure to log or handle these error codes appropriately
@@ -45,8 +47,8 @@ export default async function verifyRecaptcha(req, res) {
     }
   } catch (error) {
     console.error('Error verifying reCAPTCHA:', error);
-        return res.status(500).json({ success: false, message: 'Server error', error: error.toString() });
-    }
+    return NextResponse.json({ success: false, message: 'Server error', error: error.toString() }, { status: 500 });
+  }
 }
 
 export async function GET() {
