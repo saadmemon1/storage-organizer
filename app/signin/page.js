@@ -38,13 +38,13 @@ const SignInButton = () => {
                 },
                 body: JSON.stringify({ token }),
             });
-        
-            if (!recaptchaResponse.ok) {
-                throw new Error(`HTTP error! status: ${recaptchaResponse.status}`);
-            }
-        
+
             const recaptchaData = await recaptchaResponse.json();
             console.log('reCAPTCHA verification response:', recaptchaData);
+        
+            if (!recaptchaResponse.ok) {
+                throw new Error(`reCAPTCHA verification failed: ${recaptchaData.message}. Score: ${recaptchaData.score}, Error codes: ${recaptchaData.errorCodes?.join(', ')}`);
+            }
         
             if (!recaptchaData.success) {
                 throw new Error('reCAPTCHA verification failed. Please try again.');
