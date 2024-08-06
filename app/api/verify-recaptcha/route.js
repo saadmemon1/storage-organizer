@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
-export async function POST(request) {
+export default async function verifyRecaptcha(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+    
+}
   try {
     const { token } = await request.json();
     const secretKey = process.env.RECAPTCHA_SECRET_KEY;
@@ -17,38 +21,32 @@ export async function POST(request) {
     params.append('secret', secretKey);
     params.append('response', token);
 
-    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params,
-    });
+    
 
-    const data = await response.json();
+    const response = await axios.post('https://www.google.com/recaptcha/api/siteverify', params.toString(), {
+      headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+      },
+  });
+
+    const data = response.data;
 
     console.log('Full reCAPTCHA API response:', JSON.stringify(data, null, 2));
 
 
     if (data.success && data.score > 0.5) {
-      return NextResponse.json({ success: true, score: data.score, errorCodes: data['error-codes'] });
+      return res.status(200).json({ success: true });
     } else {
-      return NextResponse.json({
-        success: false,
-        message: 'reCAPTCHA verification failed',
-        score: data.score,
-        errorCodes: data['error-codes']
-      }, { status: 400 });
+      return res.status(400).json({
+          success: false,
+          message: 'reCAPTCHA verification failed',
+          errorCodes: data['error-codes']  // Make sure to log or handle these error codes appropriately
+      });
     }
   } catch (error) {
     console.error('Error verifying reCAPTCHA:', error);
-    return NextResponse.json({
-      success: false,
-      message: 'Error verifying reCAPTCHA',
-      error: error.message,
-      stack: error.stack
-    }, { status: 500 });
-  }
+        return res.status(500).json({ success: false, message: 'Server error', error: error.toString() });
+    }
 }
 
 export async function GET() {
