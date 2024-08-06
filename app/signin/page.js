@@ -23,13 +23,13 @@ const SignInButton = () => {
             setError('reCAPTCHA not available. Please try again later.');
             return;
         }
-
+    
         setIsLoading(true);
         setError('');
-
+    
         try {
             const token = await executeRecaptcha('signin');
-    
+        
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
                 method: 'POST',
                 headers: {
