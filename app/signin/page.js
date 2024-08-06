@@ -42,12 +42,8 @@ const SignInButton = () => {
             const recaptchaData = await recaptchaResponse.json();
             console.log('reCAPTCHA verification response:', recaptchaData);
         
-            if (!recaptchaResponse.ok) {
+            if (!recaptchaResponse.ok || !recaptchaData.success) {
                 throw new Error(`reCAPTCHA verification failed: ${recaptchaData.message}. Score: ${recaptchaData.score}, Error codes: ${recaptchaData.errorCodes?.join(', ')}`);
-            }
-        
-            if (!recaptchaData.success) {
-                throw new Error('reCAPTCHA verification failed. Please try again.');
             }
     
             const result = await signInWithPopup(auth, provider);
