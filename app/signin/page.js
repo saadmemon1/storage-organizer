@@ -28,6 +28,7 @@ const SignInButton = () => {
         setError('');
     
         try {
+            const token = await executeRecaptcha('signin');
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
                 method: 'POST',
                 headers: {
