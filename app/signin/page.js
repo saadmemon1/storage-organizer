@@ -29,7 +29,7 @@ const SignInButton = () => {
     
         try {
             const token = await executeRecaptcha('signin');
-            console.log('reCAPTCHA token generated:', token);
+            console.log('reCAPTCHA token generated:', token.substring(0, 20) + '...');
 
             const recaptchaResponse = await fetch('/api/verify-recaptcha', {
                 method: 'POST',

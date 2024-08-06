@@ -10,11 +10,21 @@ export async function POST(request) {
       console.error('reCAPTCHA secret key is not set');
       return NextResponse.json({ success: false, message: 'reCAPTCHA configuration error' }, { status: 500 });
     }
-
+    
+    console.log('Sending request to reCAPTCHA API with token:', token.substring(0, 20) + '...');
+    
     const response = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`
+      'https://www.google.com/recaptcha/api/siteverify',
+      null,
+      {
+        params: {
+          secret: secretKey,
+          response: token,
+        },
+      }
     );
-    console.log('reCAPTCHA API response:', response.data);
+
+    console.log('Full reCAPTCHA API response:', JSON.stringify(response.data, null, 2));
 
     const { success, score, 'error-codes': errorCodes } = response.data;
 
