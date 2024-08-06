@@ -4,7 +4,7 @@ import axios from 'axios';
 export async function POST(request) {
   try {
     const { token } = await request.json();
-    const secretKey = process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY;
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
     if (!secretKey) {
       console.error('reCAPTCHA secret key is not set');
@@ -13,36 +13,38 @@ export async function POST(request) {
     
     console.log('Sending request to reCAPTCHA API with token:', token.substring(0, 20) + '...');
     
-    const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
-      null,
-      {
-        params: {
-          secret: secretKey,
-          response: token,
-        },
-      }
-    );
+    const params = new URLSearchParams();
+    params.append('secret', secretKey);
+    params.append('response', token);
 
-    console.log('Full reCAPTCHA API response:', JSON.stringify(response.data, null, 2));
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params,
+    });
 
-    const { success, score, 'error-codes': errorCodes } = response.data;
+    const data = await response.json();
 
-    if (success && score > 0.5) {
-      return NextResponse.json({ success: true, score, errorCodes });
+    console.log('Full reCAPTCHA API response:', JSON.stringify(data, null, 2));
+
+
+    if (data.success && data.score > 0.5) {
+      return NextResponse.json({ success: true, score: data.score, errorCodes: data['error-codes'] });
     } else {
-      return NextResponse.json({ 
-        success: false, 
+      return NextResponse.json({
+        success: false,
         message: 'reCAPTCHA verification failed',
-        score,
-        errorCodes 
+        score: data.score,
+        errorCodes: data['error-codes']
       }, { status: 400 });
     }
   } catch (error) {
     console.error('Error verifying reCAPTCHA:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Error verifying reCAPTCHA', 
+    return NextResponse.json({
+      success: false,
+      message: 'Error verifying reCAPTCHA',
       error: error.message,
       stack: error.stack
     }, { status: 500 });
